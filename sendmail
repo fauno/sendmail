@@ -1,0 +1,41 @@
+#!/usr/bin/perl
+# Better sendmail, accepts a plain text email (headers required) and
+# sends a multipart html+text, utf8 encoded, email.
+# 
+# MIT License, (c) Nicolás Reynolds <fauno@endefensadelsl.org>
+# 
+# Install: cpan Email::Simple::Markdown
+
+use warnings;
+use strict;
+use utf8;
+use feature 'unicode_strings';
+
+use Email::Simple::Markdown;
+use Encode qw/encode decode/;
+
+my $email = Email::Simple::Markdown->create(
+  attributes => [ charset => 'utf-8' ]
+);
+
+# Read everything from stdin
+while (<STDIN>) {
+# TODO only matches one line headers
+  if ($_ =~ /^([a-z0-9\-]+): (.*)/iu) {
+# Set the headers, decoded from utf8 otherwise there's a fugly encoding mixup
+    $email->header_set($1 => encode('MIME-Header', decode('utf8', $2)));
+# And continue
+    next;
+  }
+
+# Everything else is the body
+  $msg = $msg . $_;
+}
+
+# Set the body
+$email->body_set($msg);
+
+# Send the email
+open (SENDMAIL, "| /usr/sbin/sendmail -t") or die("Failed to open pipe to sendmail: $!");
+print SENDMAIL $email->as_string;
+close (SENDMAIL);
