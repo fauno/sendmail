@@ -14,11 +14,10 @@ use feature 'unicode_strings';
 use Email::Simple::Markdown;
 use Encode qw/encode decode/;
 
-my $email = Email::Simple::Markdown->create(
-  attributes => [ charset => 'utf-8' ]
-);
+my $email = Email::Simple::Markdown->create();
 
 # Read everything from stdin
+my $msg = '';
 while (<STDIN>) {
 # TODO only matches one line headers
   if ($_ =~ /^([a-z0-9\-]+): (.*)/iu) {
@@ -34,6 +33,7 @@ while (<STDIN>) {
 
 # Set the body
 $email->body_set($msg);
+$email->charset_set('UTF-8');
 
 # Send the email
 open (SENDMAIL, "| /usr/sbin/sendmail -t") or die("Failed to open pipe to sendmail: $!");
