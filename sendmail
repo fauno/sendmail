@@ -18,22 +18,25 @@ my $email = Email::Simple::Markdown->create();
 
 # Read everything from stdin
 my $msg = '';
+my $nl = 0;
 while (<STDIN>) {
+# only search headers until the first newline
+  if ($nl == 0) {
+    $nl = 1 if $_ =~ /^$/;
 # TODO only matches one line headers
-  if ($_ =~ /^([a-z0-9\-]+): (.*)/iu) {
+    if ($_ =~ /^([a-z0-9\-]+): (.*)/iu) {
 # Set the headers, decoded from utf8 otherwise there's a fugly encoding mixup
-    $email->header_set($1 => encode('MIME-Header', decode('utf8', $2)));
-# And continue
-    next;
-  }
-
+      $email->header_set($1 => encode('MIME-Header', decode('utf8', $2)));
+    }
+  } else {
 # Everything else is the body
-  $msg = $msg . $_;
+    $msg = $msg . $_;
+  }
 }
 
 # Set the body
 $email->body_set($msg);
-$email->charset_set('UTF-8');
+$email->charset_set('utf-8');
 
 # Send the email
 open (SENDMAIL, "| /usr/sbin/sendmail -t") or die("Failed to open pipe to sendmail: $!");
